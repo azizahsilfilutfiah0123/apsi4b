@@ -1,0 +1,129 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model admin {
+  id_admin     String         @id(map: "pk_admin") @db.VarChar(10)
+  nama_user    String         @db.VarChar(100)
+  username     String         @unique(map: "uq_admin_username") @db.VarChar(30)
+  password     String         @db.VarChar(255)
+  jadwal_piket jadwal_piket[]
+  kartu_member kartu_member[]
+  transaksi    transaksi[]
+}
+
+model check_in {
+  id_checkin  String   @id(map: "pk_check_in") @db.VarChar(10)
+  no_member   String   @db.VarChar(10)
+  tgl_checkin DateTime @db.Date
+  jam_checkin DateTime @db.Time(6)
+  member      member   @relation(fields: [no_member], references: [no_member], map: "fk_checkin_member")
+}
+
+model cs {
+  id_cs             String              @id(map: "pk_cs") @db.VarChar(10)
+  nama_cs           String              @db.VarChar(100)
+  username          String              @unique(map: "uq_cs_username") @db.VarChar(30)
+  password          String              @db.VarChar(255)
+  jadwal_piket      jadwal_piket[]
+  laporan_fasilitas laporan_fasilitas[]
+}
+
+model jadwal_piket {
+  id_jadwal String   @id(map: "pk_jadwal_piket") @db.VarChar(10)
+  tgl_piket DateTime @db.Date
+  jam_mulai DateTime @db.Time(6)
+  id_admin  String   @db.VarChar(10)
+  id_cs     String   @db.VarChar(10)
+  admin     admin    @relation(fields: [id_admin], references: [id_admin], map: "fk_jadwal_admin")
+  cs        cs       @relation(fields: [id_cs], references: [id_cs], map: "fk_jadwal_cs")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model jenis_membership {
+  id_jenis    String      @id(map: "pk_jenis_membership") @db.VarChar(5)
+  nama_jenis  String      @db.VarChar(30)
+  harga       Decimal     @db.Decimal(12, 2)
+  durasi_hari Int         @db.SmallInt
+  transaksi   transaksi[]
+}
+
+model kartu_member {
+  id_kartu     String @id(map: "pk_kartu_member") @db.VarChar(10)
+  status_kartu String @db.VarChar(20)
+  no_member    String @db.VarChar(10)
+  id_admin     String @db.VarChar(10)
+  admin        admin  @relation(fields: [id_admin], references: [id_admin], map: "fk_kartu_admin")
+  member       member @relation(fields: [no_member], references: [no_member], map: "fk_kartu_member")
+}
+
+model laporan_fasilitas {
+  id_laporan     Int     @id(map: "pk_laporan_fasilitas") @default(autoincrement())
+  nama_fasilitas String  @db.VarChar(50)
+  status_laporan String  @db.VarChar(20)
+  id_cs          String  @db.VarChar(10)
+  cs             cs      @relation(fields: [id_cs], references: [id_cs], map: "fk_laporan_cs")
+  owner          owner[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model member {
+  no_member     String         @id(map: "pk_member") @db.VarChar(10)
+  nama_member   String         @db.VarChar(100)
+  jenis_kelamin String         @db.VarChar(10)
+  no_hp         String         @db.VarChar(15)
+  alamat        String         @db.VarChar(255)
+  kota          String         @db.VarChar(50)
+  check_in      check_in[]
+  kartu_member  kartu_member[]
+  notifikasi    notifikasi[]
+  transaksi     transaksi[]
+}
+
+model notifikasi {
+  id_notifikasi    String    @id(map: "pk_notifikasi") @db.VarChar(10)
+  jenis_notifikasi String    @db.VarChar(30)
+  no_member        String    @db.VarChar(10)
+  id_transaksi     String    @db.VarChar(10)
+  member           member    @relation(fields: [no_member], references: [no_member], map: "fk_notifikasi_member")
+  transaksi        transaksi @relation(fields: [id_transaksi], references: [id_transaksi], map: "fk_notifikasi_transaksi")
+}
+
+model owner {
+  id_owner              String            @id(map: "pk_owner") @db.VarChar(10)
+  keadaan_fasilitas_gym String            @db.VarChar(255)
+  pembukuan_gym         String            @db.VarChar(255)
+  id_laporan            Int
+  laporan_fasilitas     laporan_fasilitas @relation(fields: [id_laporan], references: [id_laporan], map: "fk_owner_laporan")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model transaksi {
+  id_transaksi     String           @id(map: "pk_transaksi") @db.VarChar(10)
+  tgl_transaksi    DateTime         @db.Date
+  jenis_transaksi  String           @db.VarChar(20)
+  no_member        String           @db.VarChar(10)
+  id_jenis         String           @db.VarChar(5)
+  metode_bayar     String           @db.VarChar(20)
+  status_bayar     String           @db.VarChar(20)
+  jumlah_bayar     Decimal          @db.Decimal(12, 2)
+  tgl_mulai        DateTime         @db.Date
+  tgl_berakhir     DateTime         @db.Date
+  id_admin         String           @db.VarChar(10)
+  notifikasi       notifikasi[]
+  admin            admin            @relation(fields: [id_admin], references: [id_admin], map: "fk_transaksi_admin")
+  jenis_membership jenis_membership @relation(fields: [id_jenis], references: [id_jenis], map: "fk_transaksi_jenis")
+  member           member           @relation(fields: [no_member], references: [no_member], map: "fk_transaksi_member")
+}
+
+model users {
+  id_user  Int    @id @default(autoincrement())
+  nama     String @db.VarChar(100)
+  username String @unique @db.VarChar(50)
+  role     String @db.VarChar(20)
+}
